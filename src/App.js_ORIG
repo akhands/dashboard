@@ -1,0 +1,381 @@
+import React, { useState } from "react";
+import Login from "./Login";
+import {
+  Server,
+  Cloud,
+  Layers,
+  Database,
+  Activity,
+} from "lucide-react";
+
+// Example data for 10 applications
+const applications = [
+  {
+    name: "Customer Portal",
+    components: {
+      ec2: [
+        { name: "cust-web-1", status: "running", cpu: 32, mem: 48, zone: "us-east-1a" },
+        { name: "cust-api-1", status: "stopped", cpu: 0, mem: 0, zone: "us-east-1b" },
+      ],
+      eks: [
+        { name: "cust-eks", nodes: 5, pods: 120, status: "healthy", version: "1.28", region: "us-east-1" },
+      ],
+      ecs: [],
+      rds: [
+        { name: "cust-db", engine: "Postgres", status: "healthy", cpu: 18, mem: 32, storage: 60, endpoint: "cust-db.xxxx.rds.amazonaws.com" },
+        { name: "cust-oracle", engine: "Oracle", status: "healthy", cpu: 22, mem: 40, storage: 80, endpoint: "cust-oracle.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [
+        { name: "cust-couch", status: "healthy", cpu: 10, mem: 20, storage: 30, endpoint: "cust-couch.xxxx.couchbase.com" },
+      ],
+    },
+  },
+  {
+    name: "Billing Platform",
+    components: {
+      ec2: [
+        { name: "bill-web-1", status: "running", cpu: 44, mem: 60, zone: "us-west-2a" },
+      ],
+      eks: [],
+      ecs: [
+        { name: "bill-ecs", services: 4, tasks: 18, status: "healthy", region: "us-west-2" },
+      ],
+      rds: [
+        { name: "bill-db", engine: "Postgres", status: "warning", cpu: 65, mem: 78, storage: 85, endpoint: "bill-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Payments",
+    components: {
+      ec2: [
+        { name: "pay-web-1", status: "running", cpu: 20, mem: 30, zone: "us-east-2a" },
+      ],
+      eks: [],
+      ecs: [],
+      rds: [
+        { name: "pay-db", engine: "Oracle", status: "healthy", cpu: 10, mem: 15, storage: 20, endpoint: "pay-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Analytics",
+    components: {
+      ec2: [
+        { name: "analytics-1", status: "running", cpu: 50, mem: 60, zone: "us-east-1c" },
+      ],
+      eks: [
+        { name: "analytics-eks", nodes: 3, pods: 80, status: "healthy", version: "1.27", region: "us-east-1" },
+      ],
+      ecs: [],
+      rds: [
+        { name: "analytics-db", engine: "Postgres", status: "healthy", cpu: 30, mem: 40, storage: 50, endpoint: "analytics-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "CRM",
+    components: {
+      ec2: [
+        { name: "crm-web-1", status: "running", cpu: 25, mem: 35, zone: "us-west-1a" },
+      ],
+      eks: [],
+      ecs: [
+        { name: "crm-ecs", services: 2, tasks: 10, status: "healthy", region: "us-west-1" },
+      ],
+      rds: [
+        { name: "crm-db", engine: "Oracle", status: "healthy", cpu: 15, mem: 25, storage: 35, endpoint: "crm-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Support",
+    components: {
+      ec2: [
+        { name: "support-web-1", status: "running", cpu: 18, mem: 28, zone: "us-east-2b" },
+      ],
+      eks: [],
+      ecs: [],
+      rds: [
+        { name: "support-db", engine: "Postgres", status: "healthy", cpu: 12, mem: 22, storage: 32, endpoint: "support-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Marketing",
+    components: {
+      ec2: [
+        { name: "marketing-web-1", status: "running", cpu: 28, mem: 38, zone: "us-west-2b" },
+      ],
+      eks: [
+        { name: "marketing-eks", nodes: 2, pods: 40, status: "healthy", version: "1.26", region: "us-west-2" },
+      ],
+      ecs: [],
+      rds: [
+        { name: "marketing-db", engine: "Postgres", status: "healthy", cpu: 20, mem: 30, storage: 40, endpoint: "marketing-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Inventory",
+    components: {
+      ec2: [
+        { name: "inventory-web-1", status: "running", cpu: 35, mem: 45, zone: "us-east-1d" },
+      ],
+      eks: [],
+      ecs: [
+        { name: "inventory-ecs", services: 3, tasks: 12, status: "healthy", region: "us-east-1" },
+      ],
+      rds: [
+        { name: "inventory-db", engine: "Couchbase", status: "healthy", cpu: 17, mem: 27, storage: 37, endpoint: "inventory-db.xxxx.couchbase.com" },
+      ],
+      couchbase: [
+        { name: "inventory-couch", status: "healthy", cpu: 9, mem: 19, storage: 29, endpoint: "inventory-couch.xxxx.couchbase.com" },
+      ],
+    },
+  },
+  {
+    name: "HR",
+    components: {
+      ec2: [
+        { name: "hr-web-1", status: "running", cpu: 22, mem: 32, zone: "us-west-1b" },
+      ],
+      eks: [],
+      ecs: [],
+      rds: [
+        { name: "hr-db", engine: "Oracle", status: "healthy", cpu: 11, mem: 21, storage: 31, endpoint: "hr-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+  {
+    name: "Finance",
+    components: {
+      ec2: [
+        { name: "finance-web-1", status: "running", cpu: 40, mem: 50, zone: "us-east-2c" },
+      ],
+      eks: [],
+      ecs: [],
+      rds: [
+        { name: "finance-db", engine: "Postgres", status: "healthy", cpu: 25, mem: 35, storage: 45, endpoint: "finance-db.xxxx.rds.amazonaws.com" },
+      ],
+      couchbase: [],
+    },
+  },
+];
+
+function StatusPill({ status }) {
+  let color =
+    status === "healthy" || status === "running"
+      ? "bg-green-100 text-green-700"
+      : status === "warning"
+      ? "bg-yellow-100 text-yellow-700"
+      : "bg-red-100 text-red-700";
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${color}`}>
+      {status.toUpperCase()}
+    </span>
+  );
+}
+
+function ComponentCard({ icon, title, children }) {
+  return (
+    <div className="bg-white rounded-xl shadow p-4 flex flex-col min-w-[320px] max-w-full w-full sm:w-[48%] lg:w-[32%] xl:w-[30%] mx-auto mb-6">
+      <div className="flex items-center mb-2">
+        {icon}
+        <span className="ml-2 font-semibold text-lg">{title}</span>
+      </div>
+      <div className="overflow-x-auto">{children}</div>
+    </div>
+  );
+}
+
+function ApplicationDashboard({ app }) {
+  const { ec2, eks, ecs, rds, couchbase } = app.components;
+  return (
+    <div className="flex flex-wrap gap-4 justify-center">
+      <ComponentCard icon={<Server className="w-5 h-5 text-blue-600" />} title="EC2 Instances">
+        {ec2 && ec2.length > 0 ? (
+          <table className="min-w-[400px] w-full text-sm">
+            <thead>
+              <tr>
+                <th>Name</th><th>Status</th><th>CPU %</th><th>Mem %</th><th>Zone</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ec2.map((i) => (
+                <tr key={i.name}>
+                  <td>{i.name}</td>
+                  <td><StatusPill status={i.status} /></td>
+                  <td>{i.cpu}</td>
+                  <td>{i.mem}</td>
+                  <td>{i.zone}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : <div className="text-gray-400">No EC2 Instances</div>}
+      </ComponentCard>
+      <ComponentCard icon={<Cloud className="w-5 h-5 text-purple-600" />} title="EKS Clusters">
+        {eks && eks.length > 0 ? (
+          <table className="min-w-[400px] w-full text-sm">
+            <thead>
+              <tr>
+                <th>Name</th><th>Nodes</th><th>Pods</th><th>Status</th><th>Version</th><th>Region</th>
+              </tr>
+            </thead>
+            <tbody>
+              {eks.map((i) => (
+                <tr key={i.name}>
+                  <td>{i.name}</td>
+                  <td>{i.nodes}</td>
+                  <td>{i.pods}</td>
+                  <td><StatusPill status={i.status} /></td>
+                  <td>{i.version}</td>
+                  <td>{i.region}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : <div className="text-gray-400">No EKS Clusters</div>}
+      </ComponentCard>
+      <ComponentCard icon={<Layers className="w-5 h-5 text-orange-600" />} title="ECS Clusters">
+        {ecs && ecs.length > 0 ? (
+          <table className="min-w-[400px] w-full text-sm">
+            <thead>
+              <tr>
+                <th>Name</th><th>Services</th><th>Tasks</th><th>Status</th><th>Region</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ecs.map((i) => (
+                <tr key={i.name}>
+                  <td>{i.name}</td>
+                  <td>{i.services}</td>
+                  <td>{i.tasks}</td>
+                  <td><StatusPill status={i.status} /></td>
+                  <td>{i.region}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : <div className="text-gray-400">No ECS Clusters</div>}
+      </ComponentCard>
+      <ComponentCard icon={<Database className="w-5 h-5 text-green-600" />} title="Databases (RDS/Couchbase/Oracle)">
+        {(rds && rds.length > 0) || (couchbase && couchbase.length > 0) ? (
+          <>
+            {rds && rds.length > 0 && (
+              <div>
+                <div className="font-semibold text-xs text-gray-600 mb-1">RDS/Oracle</div>
+                <table className="min-w-[400px] w-full text-sm mb-2">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Engine</th><th>Status</th><th>CPU %</th><th>Mem %</th><th>Storage %</th><th>Endpoint</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rds.map((i) => (
+                      <tr key={i.name}>
+                        <td>{i.name}</td>
+                        <td>{i.engine}</td>
+                        <td><StatusPill status={i.status} /></td>
+                        <td>{i.cpu}</td>
+                        <td>{i.mem}</td>
+                        <td>{i.storage}</td>
+                        <td>{i.endpoint}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {couchbase && couchbase.length > 0 && (
+              <div>
+                <div className="font-semibold text-xs text-gray-600 mb-1">Couchbase</div>
+                <table className="min-w-[400px] w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th>Name</th><th>Status</th><th>CPU %</th><th>Mem %</th><th>Storage %</th><th>Endpoint</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {couchbase.map((i) => (
+                      <tr key={i.name}>
+                        <td>{i.name}</td>
+                        <td><StatusPill status={i.status} /></td>
+                        <td>{i.cpu}</td>
+                        <td>{i.mem}</td>
+                        <td>{i.storage}</td>
+                        <td>{i.endpoint}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        ) : <div className="text-gray-400">No Databases</div>}
+      </ComponentCard>
+    </div>
+  );
+}
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  if (!user) {
+    return <Login onLogin={setUser} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-0">
+      <header className="bg-gradient-to-r from-blue-700 to-indigo-800 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Activity className="w-10 h-10 text-white" />
+            <div>
+              <h1 className="text-3xl font-bold text-white">FutureOps Application Dashboard</h1>
+              <p className="text-blue-200">PLDT Smart Monitoring</p>
+            </div>
+          </div>
+          <div className="text-white font-semibold">
+            Welcome, {user}!
+            <button
+              className="ml-4 px-3 py-1 bg-white/20 rounded hover:bg-white/40 transition"
+              onClick={() => setUser(null)}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-7xl mx-auto px-2 sm:px-6 py-8">
+        {/* Application Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-slate-200">
+          {applications.map((app, idx) => (
+            <button
+              key={app.name}
+              className={`px-5 py-2 rounded-t-lg font-semibold transition-all ${
+                selectedTab === idx
+                  ? "bg-white text-blue-900 shadow border-x border-t border-slate-200 -mb-px"
+                  : "bg-slate-200 text-slate-600 hover:bg-white"
+              }`}
+              onClick={() => setSelectedTab(idx)}
+            >
+              {app.name}
+            </button>
+          ))}
+        </div>
+        {/* Application Dashboard */}
+        <ApplicationDashboard app={applications[selectedTab]} />
+      </main>
+    </div>
+  );
+}
